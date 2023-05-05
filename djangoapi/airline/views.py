@@ -9,7 +9,9 @@ from rest_framework import status
 
 locToId = {
     "England" : 1,
-    "USA" : 3
+    "USA" : 3,
+    "France" : 4,
+    "Brazil" : 5
 }
 
 @api_view(["GET"])
