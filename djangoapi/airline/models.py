@@ -38,6 +38,7 @@ class FlightInstance(models.Model):
     arrival_time = models.DateTimeField()
     arrival_day= models.DateField()
     num_available_seats = models.IntegerField()
+    airline_name = "Lewis's Airline"
     def __str__(self):
         return self.departure_location_ID.country_name + " to " + self.arrival_location_ID.country_name
 
