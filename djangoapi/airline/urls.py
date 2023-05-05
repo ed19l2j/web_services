@@ -20,10 +20,6 @@ from rest_framework.urlpatterns import format_suffix_patterns
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    # path("countries/", views.country_list),
-    # path("countries/<int:id>", views.country_detail),
-    # path("seats/<int:id>", views.seat_detail),
-    # path("flights/", views.flight_list),
     path("flights/", views.query_flights),
     path("seats/", views.query_seats),
     path("bookings/", views.add_booking),
