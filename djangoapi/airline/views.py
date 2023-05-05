@@ -48,7 +48,7 @@ def query_seats(request, format=None):
         except SeatInstance.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
         serializer = SeatSerializer(seats, many=True)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     elif request.method == "PUT":
         flight_ID = request.GET.get("flight_ID")
         seat_name = request.GET.get("seat_name")
@@ -59,7 +59,7 @@ def query_seats(request, format=None):
         serializer = SeatSerializer(seats, data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -75,7 +75,7 @@ def add_booking(request, format=None):
         serializer = BookingSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -93,5 +93,5 @@ def add_passenger(request, format=None):
         serializer = PassengerSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
