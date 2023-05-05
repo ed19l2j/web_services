@@ -19,7 +19,7 @@ class BookingInstance(models.Model):
     payment_confirmed = models.BooleanField(default=False)
     transaction_ID = models.IntegerField(blank=True)
     def __str__(self):
-        return self.lead_passenger_contact_email
+        return "Booking: " + str(self.id)
 
 
 class Plane(models.Model):

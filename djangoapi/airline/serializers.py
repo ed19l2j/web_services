@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Country, FlightInstance, SeatInstance, BookingInstance
+from .models import Country, FlightInstance, SeatInstance, BookingInstance, Passenger
 
 
 class CountrySerializer(serializers.ModelSerializer):
@@ -24,3 +24,9 @@ class BookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = BookingInstance
         fields = ["id", "booked_at_time", "lead_passenger_contact_email", "lead_passenger_contact_number", "total_booking_cost", "payment_confirmed", "transaction_ID"]
+
+
+class PassengerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Passenger
+        fields = ["id", "booking_ID", "first_name", "last_name", "date_of_birth", "nationality_country_ID", "passport_num", "seat_ID"]

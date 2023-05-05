@@ -27,7 +27,7 @@ urlpatterns = [
     path("flights/", views.query_flights),
     path("seats/", views.query_seats),
     path("bookings/", views.add_booking),
-
+    path("passengers/", views.add_passenger),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

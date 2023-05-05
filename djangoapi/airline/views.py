@@ -1,7 +1,7 @@
 # Create the endpoints in here
 from django.http import JsonResponse
 from .models import Country, FlightInstance, SeatInstance, BookingInstance
-from .serializers import CountrySerializer, FlightSerializer, SeatSerializer, BookingSerializer
+from .serializers import CountrySerializer, FlightSerializer, SeatSerializer, BookingSerializer, PassengerSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -124,7 +124,7 @@ def query_seats(request, format=None):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(["GET", "POST"])
+@api_view(["POST"])
 def add_booking(request, format=None):
     if request.method == "POST":
         booked_at_time = request.GET.get("booked_at_time")
@@ -138,10 +138,21 @@ def add_booking(request, format=None):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    elif request.method == "GET":
-        try:
-            bookings = BookingInstance.objects.all()
-        except BookingInstance.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        serializer = BookingSerializer(bookings, many=True)
-        return Response(serializer.data)
+
+
+@api_view(["POST"])
+def add_passenger(request, format=None):
+    if request.method == "POST":
+        booking_ID = request.GET.get("booking_ID")
+        first_name = request.GET.get("first_name")
+        last_name = request.GET.get("last_name")
+        date_of_birth = request.GET.get("date_of_birth")
+        nationality_country_ID = request.GET.get("nationality_country_ID")
+        passport_num = request.GET.get("passport_num")
+        seat_ID = request.GET.get("seat_ID")
+
+        serializer = PassengerSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
