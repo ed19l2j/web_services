@@ -8,14 +8,17 @@ from rest_framework import status
 import csv
 
 locToId = {}
-with open('countries.csv', mode='r') as csvfile:
-	reader = csv.reader(csvfile, delimiter=',')
-	i = 0
-	for line in reader:
-		if i != 0:
-			country = {line[0] : i}
-			locToId.update(country)
-		i+=1
+try:
+	with open('countries.csv', mode='r') as csvfile:
+		reader = csv.reader(csvfile, delimiter=',')
+		i = 0
+		for line in reader:
+			if i != 0:
+				country = {line[0] : i}
+				locToId.update(country)
+			i+=1
+except:
+	print("error")
 
 @api_view(["GET"])
 def query_flights(request):
