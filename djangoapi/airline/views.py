@@ -6,10 +6,25 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 import csv
+import os
+
 
 locToId = {}
 try:
 	with open('countries.csv', mode='r') as csvfile:
+		reader = csv.reader(csvfile, delimiter=',')
+		i = 0
+		for line in reader:
+			if i != 0:
+				country = {line[0] : i}
+				locToId.update(country)
+			i+=1
+except:
+	print("error")
+
+
+try:
+	with open('/home/iewiis/web_services/djangoapi/countries.csv', mode='r') as csvfile:
 		reader = csv.reader(csvfile, delimiter=',')
 		i = 0
 		for line in reader:
