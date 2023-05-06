@@ -48,7 +48,7 @@ class SeatInstance(models.Model):
     available = models.BooleanField()
     flight_ID = models.ForeignKey(FlightInstance, on_delete=models.PROTECT)
     def __str__(self):
-        return self.flight_ID.departure_location_ID.country_name + " to " + self.flight_ID.arrival_location_ID.country_name + self.flight_ID.id + " seat " + self.seat_name
+        return self.flight_ID.departure_location_ID.country_name + " to " + self.flight_ID.arrival_location_ID.country_name + " " + str(self.flight_ID.id) + " seat " + self.seat_name
 
 
 class Passenger(models.Model):
