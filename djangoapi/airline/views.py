@@ -21,8 +21,7 @@ def query_flights(request):
         arrival_date = request.GET.get("arrival_date")
         max_price = request.GET.get("max_price")
         num_passengers = request.GET.get("num_passengers")
-
-        if max_price != 0:
+        if max_price != "0":
             try:
                 flights = FlightInstance.objects.filter(departure_location_ID=locToId[departure_country], arrival_location_ID=locToId[arrival_country], arrival_day=arrival_date, flight_ticket_cost__lte=max_price, num_available_seats__gte=num_passengers)
             except FlightInstance.DoesNotExist:
