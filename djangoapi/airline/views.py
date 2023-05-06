@@ -6,7 +6,6 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 import csv
-import os
 
 locToId = {}
 with open('countries.csv', mode='r') as csvfile:
