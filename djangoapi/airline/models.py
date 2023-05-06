@@ -3,8 +3,8 @@ from django.db import models
 
 
 class Country(models.Model):
-    country_name = models.CharField(max_length = 50)
-    continent = models.CharField(max_length = 50)
+    country_name = models.CharField(max_length = 100)
+    continent = models.CharField(max_length = 100)
     latitude = models.FloatField()
     longitude = models.FloatField()
     def __str__(self):
