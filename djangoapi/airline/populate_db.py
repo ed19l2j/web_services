@@ -73,18 +73,18 @@ def PopulateFlights():
 			coords_2 = (flight.arrival_country.latitude, flight.arrival_country.longitude)
 			distance_between_countries = geopy.distance.geodesic(coords_1, coords_2).miles
 			if distance_between_countries <= 300:
-				flight.plane_ID = Plane.objects.get(id=1)
+				flight.plane_id = Plane.objects.get(id=1)
 			elif distance_between_countries <= 750:
-				flight.plane_ID = Plane.objects.get(id=2)
+				flight.plane_id = Plane.objects.get(id=2)
 			elif distance_between_countries <= 1500:
-				flight.plane_ID = Plane.objects.get(id=3)
+				flight.plane_id = Plane.objects.get(id=3)
 			elif distance_between_countries <= 3200:
-				flight.plane_ID = Plane.objects.get(id=4)
+				flight.plane_id = Plane.objects.get(id=4)
 			elif distance_between_countries <= 5000:
-				flight.plane_ID = Plane.objects.get(id=5)
+				flight.plane_id = Plane.objects.get(id=5)
 			else:
-				flight.plane_ID = Plane.objects.get(id=6)
-			flight.num_available_seats = flight.plane_ID.max_capacity
+				flight.plane_id = Plane.objects.get(id=6)
+			flight.num_available_seats = flight.plane_id.max_capacity
 			flight.departure_time, flight.arrival_time, later_time = random_date("2023-07-05 01:01:01", "2023-12-31 01:01:01", random.random())
 			utc_struct_time = time.gmtime(later_time)
 			dt = datetime.datetime.fromtimestamp(time.mktime(utc_struct_time))
@@ -105,7 +105,7 @@ def PopulateSeats():
 			new_seat = SeatInstance()
 			new_seat.seat_name = columns[column] + str(math.floor((row-1)/6) + 1)
 			new_seat.available = True
-			new_seat.flight_ID = flight
+			new_seat.flight_id = flight
 			column += 1
 			row += 1
 			if column > 5:

@@ -54,7 +54,8 @@ def query_flights(request):
 				flights = FlightInstance.objects.filter(departure_country=locToId[departure_country], arrival_country=locToId[arrival_country], departure_day=departure_date, num_available_seats__gte=num_passengers)
 			except FlightInstance.DoesNotExist:
 				return Response(status=status.HTTP_404_NOT_FOUND)
-
+		request.data["departure_country"] = departure_country
+		request.data["arrival_country"] = arrival_country
 		serializer = FlightSerializer(flights, many=True)
 		return Response(serializer.data, status=status.HTTP_200_OK)
 	return Response(status=status.HTTP_200_OK)
@@ -63,18 +64,18 @@ def query_flights(request):
 @api_view(["GET", "PUT"])
 def query_seats(request, format=None):
 	if request.method == "GET":
-		flight_ID = request.GET.get("flight_ID")
+		flight_id = request.GET.get("flight_id")
 		try:
-			seats = SeatInstance.objects.filter(flight_ID=flight_ID)
+			seats = SeatInstance.objects.filter(flight_id=flight_id)
 		except SeatInstance.DoesNotExist:
 			return Response(status=status.HTTP_404_NOT_FOUND)
 		serializer = SeatSerializer(seats, many=True)
 		return Response(serializer.data, status=status.HTTP_200_OK)
 	elif request.method == "PUT":
-		flight_ID = request.GET.get("flight_ID")
+		flight_id = request.GET.get("flight_id")
 		seat_name = request.GET.get("seat_name")
 		try:
-			seats = SeatInstance.objects.filter(flight_ID=flight_ID, available=True, seat_name=seat_name).first()
+			seats = SeatInstance.objects.filter(flight_id=flight_id, available=True, seat_name=seat_name).first()
 		except SeatInstance.DoesNotExist:
 			return Response(status=status.HTTP_404_NOT_FOUND)
 		serializer = SeatSerializer(seats, data=request.data)
@@ -85,7 +86,7 @@ def query_seats(request, format=None):
 
 
 # {
-#     "flight_ID": 1,
+#     "flight_id": 1,
 #     "lead_passenger_contact_email": "testingtesting@hello.com",
 #     "lead_passenger_contact_number": "999",
 #     "passengers": [{"passenger": "1"}]
@@ -94,28 +95,28 @@ def query_seats(request, format=None):
 def add_booking(request, format=None):
 	if request.method == "POST":
 		request.data["booked_at_time"] = datetime.datetime.now()
-		flight_ID = request.data["flight_ID"]
-		flight = FlightInstance.objects.get(pk=flight_ID)
+		flight_id = request.data["flight_id"]
+		flight = FlightInstance.objects.get(pk=flight_id)
 		request.data["total_booking_cost"] = flight.flight_ticket_cost
 		request.data["payment_confirmed"] = False
-		request.data["transaction_ID"] = 0
+		request.data["transaction_id"] = 0
 		booking_serializer = BookingSerializer(data=request.data)
 		if booking_serializer.is_valid():
 		    booking = booking_serializer.save()
-		    booking_ID = booking.id
+		    booking_id = booking.id
 		passengers = request.data["passengers"]
 		print("here1")
 		for passenger in passengers:
 			print("here2")
-			request.data["booking_ID"] = booking_ID
+			request.data["booking_id"] = booking_id
 			request.data["first_name"] = passenger["first_name"]
 			request.data["last_name"] = passenger["last_name"]
 			request.data["date_of_birth"] = passenger["date_of_birth"]
 			country = Country.objects.get(country_name = passenger["nationality_country"])
 			request.data["nationality_country"] = country.id
 			request.data["passport_number"] = passenger["passport_number"]
-			seat = SeatInstance.objects.get(flight_ID = flight_ID, seat_name=passenger["seat_number"])
-			request.data["seat_ID"] = seat.id
+			seat = SeatInstance.objects.get(flight_id = flight_id, seat_name=passenger["seat_number"])
+			request.data["seat_id"] = seat.id
 			passenger_serializer = PassengerSerializer(data=request.data)
 			print(passenger_serializer)
 			if passenger_serializer.is_valid():
@@ -130,13 +131,13 @@ def add_booking(request, format=None):
 @api_view(["POST"])
 def add_passenger(request, format=None):
 	if request.method == "POST":
-		# booking_ID = request.GET.get("booking_ID")
+		# booking_id = request.GET.get("booking_id")
 		# first_name = request.GET.get("first_name")
 		# last_name = request.GET.get("last_name")
 		# date_of_birth = request.GET.get("date_of_birth")
-		# nationality_country_ID = request.GET.get("nationality_country_ID")
+		# nationality_country_id = request.GET.get("nationality_country_id")
 		# passport_num = request.GET.get("passport_num")
-		# seat_ID = request.GET.get("seat_ID")
+		# seat_id = request.GET.get("seat_id")
 		serializer = PassengerSerializer(data=request.data)
 		if serializer.is_valid():
 			serializer.save()
