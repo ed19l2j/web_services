@@ -54,10 +54,13 @@ def query_flights(request):
 				flights = FlightInstance.objects.filter(departure_country=locToId[departure_country], arrival_country=locToId[arrival_country], departure_day=departure_date, num_available_seats__gte=num_passengers)
 			except FlightInstance.DoesNotExist:
 				return Response(status=status.HTTP_404_NOT_FOUND)
-		request.data["departure_country"] = departure_country
-		request.data["arrival_country"] = arrival_country
+
 		serializer = FlightSerializer(flights, many=True)
-		return Response(serializer.data, status=status.HTTP_200_OK)
+		serialized_data = serializer.data
+		serialized_data[0]['departure_country'] = departure_country
+		serialized_data[0]['arrival_country'] = arrival_country
+		# serialized_data.departure_country = departure_country
+		return Response(serialized_data, status=status.HTTP_200_OK)
 	return Response(status=status.HTTP_200_OK)
 
 
@@ -115,7 +118,7 @@ def add_booking(request, format=None):
 			country = Country.objects.get(country_name = passenger["nationality_country"])
 			request.data["nationality_country"] = country.id
 			request.data["passport_number"] = passenger["passport_number"]
-			seat = SeatInstance.objects.get(flight_id = flight_id, seat_name=passenger["seat_number"])
+			seat = SeatInstance.objects.get(flight_id = flight_id, seat_name=passenger["seat_name"])
 			request.data["seat_id"] = seat.id
 			passenger_serializer = PassengerSerializer(data=request.data)
 			print(passenger_serializer)
