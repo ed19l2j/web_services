@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework import status
 import csv
 import os
+import datetime
 
 
 locToId = {}
@@ -20,7 +21,7 @@ try:
 				locToId.update(country)
 			i+=1
 except:
-	print("error")
+	pass
 
 
 try:
@@ -33,24 +34,24 @@ try:
 				locToId.update(country)
 			i+=1
 except:
-	print("error")
+	pass
 
 @api_view(["GET"])
 def query_flights(request):
 	if request.method == "GET":
 		departure_country = request.GET.get("departure_country")
 		arrival_country = request.GET.get("arrival_country")
-		arrival_date = request.GET.get("arrival_date")
+		departure_date = request.GET.get("departure_date")
 		max_price = request.GET.get("max_price")
 		num_passengers = request.GET.get("num_passengers")
-		if max_price != "0":
+		if max_price != None:
 			try:
-				flights = FlightInstance.objects.filter(departure_location_ID=locToId[departure_country], arrival_location_ID=locToId[arrival_country], arrival_day=arrival_date, flight_ticket_cost__lte=max_price, num_available_seats__gte=num_passengers)
+				flights = FlightInstance.objects.filter(departure_country=locToId[departure_country], arrival_country=locToId[arrival_country], departure_day=departure_date, flight_ticket_cost__lte=max_price, num_available_seats__gte=num_passengers)
 			except FlightInstance.DoesNotExist:
 				return Response(status=status.HTTP_404_NOT_FOUND)
 		else:
 			try:
-				flights = FlightInstance.objects.filter(departure_location_ID=locToId[departure_country], arrival_location_ID=locToId[arrival_country], arrival_day=arrival_date, num_available_seats__gte=num_passengers)
+				flights = FlightInstance.objects.filter(departure_country=locToId[departure_country], arrival_country=locToId[arrival_country], departure_day=departure_date, num_available_seats__gte=num_passengers)
 			except FlightInstance.DoesNotExist:
 				return Response(status=status.HTTP_404_NOT_FOUND)
 
@@ -64,7 +65,7 @@ def query_seats(request, format=None):
 	if request.method == "GET":
 		flight_ID = request.GET.get("flight_ID")
 		try:
-			seats = SeatInstance.objects.filter(flight_ID=flight_ID, available=True)
+			seats = SeatInstance.objects.filter(flight_ID=flight_ID)
 		except SeatInstance.DoesNotExist:
 			return Response(status=status.HTTP_404_NOT_FOUND)
 		serializer = SeatSerializer(seats, many=True)
@@ -83,33 +84,59 @@ def query_seats(request, format=None):
 		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+# {
+#     "flight_ID": 1,
+#     "lead_passenger_contact_email": "testingtesting@hello.com",
+#     "lead_passenger_contact_number": "999",
+#     "passengers": [{"passenger": "1"}]
+# }
 @api_view(["POST"])
 def add_booking(request, format=None):
 	if request.method == "POST":
-		booked_at_time = request.GET.get("booked_at_time")
-		lead_passenger_contact_email = request.GET.get("lead_passenger_contact_email")
-		lead_passenger_contact_number = request.GET.get("lead_passenger_contact_number")
-		total_booking_cost = request.GET.get("total_booking_cost")
-		payment_confirmed = False
-		transaction_ID = None
-		serializer = BookingSerializer(data=request.data)
-		if serializer.is_valid():
-			serializer.save()
-			return Response(serializer.data, status=status.HTTP_200_OK)
-		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+		request.data["booked_at_time"] = datetime.datetime.now()
+		flight_ID = request.data["flight_ID"]
+		flight = FlightInstance.objects.get(pk=flight_ID)
+		request.data["total_booking_cost"] = flight.flight_ticket_cost
+		request.data["payment_confirmed"] = False
+		request.data["transaction_ID"] = 0
+		booking_serializer = BookingSerializer(data=request.data)
+		if booking_serializer.is_valid():
+		    booking = booking_serializer.save()
+		    booking_ID = booking.id
+		passengers = request.data["passengers"]
+		print("here1")
+		for passenger in passengers:
+			print("here2")
+			request.data["booking_ID"] = booking_ID
+			request.data["first_name"] = passenger["first_name"]
+			request.data["last_name"] = passenger["last_name"]
+			request.data["date_of_birth"] = passenger["date_of_birth"]
+			country = Country.objects.get(country_name = passenger["nationality_country"])
+			request.data["nationality_country"] = country.id
+			request.data["passport_number"] = passenger["passport_number"]
+			seat = SeatInstance.objects.get(flight_ID = flight_ID, seat_name=passenger["seat_number"])
+			request.data["seat_ID"] = seat.id
+			passenger_serializer = PassengerSerializer(data=request.data)
+			print(passenger_serializer)
+			if passenger_serializer.is_valid():
+				passenger_serializer.save()
+				print("here3")
+			else:
+				print(passenger_serializer.errors)
+		return Response(booking_serializer.data, status=status.HTTP_200_OK)
+	return Response(booking_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])
 def add_passenger(request, format=None):
 	if request.method == "POST":
-		booking_ID = request.GET.get("booking_ID")
-		first_name = request.GET.get("first_name")
-		last_name = request.GET.get("last_name")
-		date_of_birth = request.GET.get("date_of_birth")
-		nationality_country_ID = request.GET.get("nationality_country_ID")
-		passport_num = request.GET.get("passport_num")
-		seat_ID = request.GET.get("seat_ID")
-
+		# booking_ID = request.GET.get("booking_ID")
+		# first_name = request.GET.get("first_name")
+		# last_name = request.GET.get("last_name")
+		# date_of_birth = request.GET.get("date_of_birth")
+		# nationality_country_ID = request.GET.get("nationality_country_ID")
+		# passport_num = request.GET.get("passport_num")
+		# seat_ID = request.GET.get("seat_ID")
 		serializer = PassengerSerializer(data=request.data)
 		if serializer.is_valid():
 			serializer.save()

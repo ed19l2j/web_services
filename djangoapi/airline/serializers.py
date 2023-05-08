@@ -11,7 +11,7 @@ class CountrySerializer(serializers.ModelSerializer):
 class FlightSerializer(serializers.ModelSerializer):
     class Meta:
         model = FlightInstance
-        fields = ["id", "plane_ID", "flight_ticket_cost", "departure_location_ID", "arrival_location_ID", "departure_time", "arrival_time", "num_available_seats", "airline_name"]
+        fields = ["id", "plane_ID", "flight_ticket_cost", "departure_country", "arrival_country", "departure_time", "arrival_time", "num_available_seats", "airline_name"]
 
 
 class SeatSerializer(serializers.ModelSerializer):
@@ -29,4 +29,4 @@ class BookingSerializer(serializers.ModelSerializer):
 class PassengerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Passenger
-        fields = ["id", "booking_ID", "first_name", "last_name", "date_of_birth", "nationality_country_ID", "passport_num", "seat_ID"]
+        fields = ["id", "booking_ID", "first_name", "last_name", "date_of_birth", "nationality_country", "passport_number", "seat_ID"]

@@ -32,15 +32,15 @@ class Plane(models.Model):
 class FlightInstance(models.Model):
     plane_ID = models.ForeignKey(Plane, on_delete=models.PROTECT)
     flight_ticket_cost = models.FloatField()
-    departure_location_ID = models.ForeignKey(Country, on_delete=models.PROTECT)
-    arrival_location_ID = models.ForeignKey(Country, on_delete=models.PROTECT, related_name='%(class)s_requests_created')
+    departure_country = models.ForeignKey(Country, on_delete=models.PROTECT)
+    arrival_country = models.ForeignKey(Country, on_delete=models.PROTECT, related_name='%(class)s_requests_created')
     departure_time = models.DateTimeField()
     arrival_time = models.DateTimeField()
-    arrival_day= models.DateField()
+    departure_day = models.DateField()
     num_available_seats = models.IntegerField()
     airline_name = "Lewis's Airline"
     def __str__(self):
-        return self.departure_location_ID.country_name + " to " + self.arrival_location_ID.country_name
+        return self.departure_country.country_name + " to " + self.arrival_country.country_name
 
 
 class SeatInstance(models.Model):
@@ -48,16 +48,16 @@ class SeatInstance(models.Model):
     available = models.BooleanField()
     flight_ID = models.ForeignKey(FlightInstance, on_delete=models.PROTECT)
     def __str__(self):
-        return self.flight_ID.departure_location_ID.country_name + " to " + self.flight_ID.arrival_location_ID.country_name + " " + str(self.flight_ID.id) + " seat " + self.seat_name
+        return self.flight_ID.departure_country.country_name + " to " + self.flight_ID.arrival_country.country_name + " " + str(self.flight_ID.id) + " seat " + self.seat_name
 
 
 class Passenger(models.Model):
-    booking_ID = models.ForeignKey(BookingInstance, on_delete=models.PROTECT)
+    booking_ID = models.ForeignKey(BookingInstance, on_delete=models.CASCADE)
     first_name = models.CharField(max_length = 50)
     last_name = models.CharField(max_length = 50)
     date_of_birth = models.DateField()
-    nationality_country_ID = models.ForeignKey(Country, on_delete=models.PROTECT)
-    passport_num = models.CharField(max_length = 50)
+    nationality_country = models.ForeignKey(Country, on_delete=models.PROTECT)
+    passport_number = models.CharField(max_length = 50)
     seat_ID  = models.ForeignKey(SeatInstance, on_delete=models.PROTECT)
     def __str__(self):
         return self.first_name + " " + self.last_name
