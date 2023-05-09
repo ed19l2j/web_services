@@ -1,6 +1,6 @@
 # Create the endpoints in here
 from django.http import JsonResponse
-from .models import Country, FlightInstance, SeatInstance, BookingInstance
+from .models import Country, FlightInstance, SeatInstance, BookingInstance, Passenger
 from .serializers import CountrySerializer, FlightSerializer, SeatSerializer, BookingSerializer, PassengerSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -8,6 +8,7 @@ from rest_framework import status
 import csv
 import os
 import datetime
+import requests
 
 
 locToId = {}
@@ -64,7 +65,7 @@ def query_flights(request):
 	return Response(status=status.HTTP_200_OK)
 
 
-@api_view(["GET", "PUT"])
+@api_view(["GET"])
 def query_seats(request, format=None):
 	if request.method == "GET":
 		flight_id = request.GET.get("flight_id")
@@ -74,29 +75,54 @@ def query_seats(request, format=None):
 			return Response(status=status.HTTP_404_NOT_FOUND)
 		serializer = SeatSerializer(seats, many=True)
 		return Response(serializer.data, status=status.HTTP_200_OK)
-	elif request.method == "PUT":
-		flight_id = request.GET.get("flight_id")
-		seat_name = request.GET.get("seat_name")
-		try:
-			seats = SeatInstance.objects.filter(flight_id=flight_id, available=True, seat_name=seat_name).first()
-		except SeatInstance.DoesNotExist:
-			return Response(status=status.HTTP_404_NOT_FOUND)
-		serializer = SeatSerializer(seats, data=request.data)
-		if serializer.is_valid():
-			serializer.save()
-			return Response(serializer.data, status=status.HTTP_200_OK)
-		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["PUT"])
+def update_seats(request, format=None):
+	if request.method == "PUT":
+		booking_id = request.data["booking_id"]
+		new_seat_name = request.data["seat_name"]
+		first_name = request.data["first_name"]
+		last_name = request.data["last_name"]
+		passenger = Passenger.objects.get(booking_id=booking_id, first_name=first_name, last_name=last_name)
+		seat = SeatInstance.objects.get(id=passenger.seat_id.id)
+		seat.available = True
+		seat.save()
+		new_seat = SeatInstance.objects.get(flight_id=seat.flight_id, seat_name=new_seat_name)
+		print(new_seat)
+		passenger.seat_id = new_seat
+		passenger.save()
+		new_seat.available = False
+		new_seat.save()
+		return Response(status=status.HTTP_200_OK)
+	return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 # {
 #     "flight_id": 1,
 #     "lead_passenger_contact_email": "testingtesting@hello.com",
 #     "lead_passenger_contact_number": "999",
-#     "passengers": [{"passenger": "1"}]
+#     "passengers": [
+#     {
+#         "first_name": "Lewis",
+#         "last_name": "Jackson",
+#         "date_of_birth": "2002-05-22",
+#         "nationality_country": "Poland",
+#         "passport_number": "02910831083",
+#         "seat_name": "A9"
+#     }
+#     ]
 # }
 @api_view(["POST"])
 def add_booking(request, format=None):
 	if request.method == "POST":
+
+		# sender_cardholder_name = request.data["sender_cardholder_name"]
+		# sender_card_number = request.data["sender_card_number"]
+		# sender_cvc_hash = request.data["sender_cvc_hash"]
+		# sender_sortcode = request.data["sender_sortcode"]
+		# sender_expiry_date = request.data["sender_expiry_date"]
+
 		request.data["booked_at_time"] = datetime.datetime.now()
 		flight_id = request.data["flight_id"]
 		flight = FlightInstance.objects.get(pk=flight_id)
@@ -125,6 +151,15 @@ def add_booking(request, format=None):
 				seat.save()
 				flight.num_available_seats = flight.num_available_seats - 1
 				flight.save()
+		card_details = {"sender_cardholder_name":"James","sender_card_number":"1234567890987654","sender_cvc_hash":"9a0a82f0c0cf31470d7affede3406cc9aa8410671520b727044eda15b4c25532a9b5cd8aaf9cec4919d76255b6bfb00f","sender_sortcode":"373891","sender_expiry_date":"0923","recipient_cardholder_name":"Mr Bean","recipient_sortcode":"373891","recipient_account_number":"23456789","payment_amount":"100.00"}
+
+		response = requests.post("https://jzhangly.pythonanywhere.com/pay/", json=card_details)
+		print(response.status_code)
+		print(response.text)
+
+		get_data = {"transaction_id":"15"}
+		response = requests.post("https://jzhangly.pythonanywhere.com/get_transaction_details/", json=get_data)
+		print(response.text)
 		return Response(booking_serializer.data, status=status.HTTP_200_OK)
 	return Response(booking_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -144,3 +179,12 @@ def get_booking_details(request, format=None):
 			return Response(booking_serializer.data, status=status.HTTP_200_OK)
 		return Response(booking_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 	return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["DELETE"])
+def delete_booking(request, format=None):
+	if request.method == "DELETE":
+		booking = BookingInstance.objects.get(id = booking_id)
+		serializer = BookingSerializer(booking, request.data)
+		serialized_data = serializer.data
+		print(serialized_data[0])

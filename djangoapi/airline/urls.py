@@ -24,6 +24,8 @@ urlpatterns = [
     path("seats/", views.query_seats),
     path("book/", views.add_booking),
     path("get_booking_details/", views.get_booking_details),
+    path("update_seats/", views.update_seats),
+    path("delete_booking/", views.delete_booking),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

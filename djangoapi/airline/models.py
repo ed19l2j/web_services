@@ -18,6 +18,7 @@ class BookingInstance(models.Model):
     total_booking_cost = models.FloatField()
     payment_confirmed = models.BooleanField(default=False)
     transaction_id = models.IntegerField(blank=True)
+    pending = models.BooleanField(default=True)
     def __str__(self):
         return "Booking: " + str(self.id)
 
