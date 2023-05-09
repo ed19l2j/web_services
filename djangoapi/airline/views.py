@@ -108,9 +108,7 @@ def add_booking(request, format=None):
 		    booking = booking_serializer.save()
 		    booking_id = booking.id
 		passengers = request.data["passengers"]
-		print("here1")
 		for passenger in passengers:
-			print("here2")
 			request.data["booking_id"] = booking_id
 			request.data["first_name"] = passenger["first_name"]
 			request.data["last_name"] = passenger["last_name"]
@@ -121,28 +119,28 @@ def add_booking(request, format=None):
 			seat = SeatInstance.objects.get(flight_id = flight_id, seat_name=passenger["seat_name"])
 			request.data["seat_id"] = seat.id
 			passenger_serializer = PassengerSerializer(data=request.data)
-			print(passenger_serializer)
 			if passenger_serializer.is_valid():
 				passenger_serializer.save()
-				print("here3")
-			else:
-				print(passenger_serializer.errors)
+				seat.available = False
+				seat.save()
+				flight.num_available_seats = flight.num_available_seats - 1
+				flight.save()
 		return Response(booking_serializer.data, status=status.HTTP_200_OK)
 	return Response(booking_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(["POST"])
-def add_passenger(request, format=None):
-	if request.method == "POST":
-		# booking_id = request.GET.get("booking_id")
-		# first_name = request.GET.get("first_name")
-		# last_name = request.GET.get("last_name")
-		# date_of_birth = request.GET.get("date_of_birth")
-		# nationality_country_id = request.GET.get("nationality_country_id")
-		# passport_num = request.GET.get("passport_num")
-		# seat_id = request.GET.get("seat_id")
-		serializer = PassengerSerializer(data=request.data)
-		if serializer.is_valid():
-			serializer.save()
-			return Response(serializer.data, status=status.HTTP_200_OK)
-		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+@api_view(["GET"])
+def get_booking_details(request, format=None):
+	if request.method == "GET":
+		booking_id = request.GET.get("booking_id")
+		lead_passenger_contact_email = request.GET.get("lead_passenger_contact_email")
+		booking = BookingInstance.objects.get(id = booking_id, lead_passenger_contact_email = lead_passenger_contact_email)
+		request.data["booked_at_time"] = booking.booked_at_time
+		request.data["lead_passenger_contact_email"] = booking.lead_passenger_contact_email
+		request.data["lead_passenger_contact_number"] = booking.lead_passenger_contact_number
+		request.data["total_booking_cost"] = booking.total_booking_cost
+		booking_serializer = BookingSerializer(booking, data=request.data)
+		if booking_serializer.is_valid():
+			return Response(booking_serializer.data, status=status.HTTP_200_OK)
+		return Response(booking_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+	return Response(status=status.HTTP_400_BAD_REQUEST)
