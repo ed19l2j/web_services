@@ -180,10 +180,8 @@ def add_booking(request, format=None):
 		}
 
 		response = requests.post("https://sc20jzl.pythonanywhere.com/pay/", json=card_details)
-		print(response.status_code)
 		response = json.loads(response.text)
-		print(response["transaction_id"])
-		if response.status == 200:
+		if response.status_code == 200:
 			booking.transaction_id = response["transaction_id"]
 			booking.save()
 			booking.payment_confirmed = True
