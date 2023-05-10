@@ -9,6 +9,13 @@ import csv
 import os
 import datetime
 import requests
+import json
+
+airline_account_number = "20202020"
+airline_card_number_hash = "0a08c389d1e7ec3e1d13a74f46e1aae2b020d607316e4b818f378dc62d2c4d90477371fd034799c374ff8699b63a6f69"
+airline_cvc_hash = "99e0a589f8889faee97a49bc43e3ec1faf735413c39fffd20d2f261fb019bbf8d3b3e07f203088aa50ee279fc24d7ce3"
+airline_expiry_date = "0724"
+airline_cardholder_name = "Lewis Jackson"
 
 
 locToId = {}
@@ -110,25 +117,23 @@ def update_seats(request, format=None):
 #         "nationality_country": "Poland",
 #         "passport_number": "02910831083",
 #         "seat_name": "A9"
+#     }],
+#     "payment_details": [
+#     {
+#         "cardholder_name": "James",
+#         "card_number": "1234567890987654",
+#         "cvc": "9a0a82f0c0cf31470d7affede3406cc9aa8410671520b727044eda15b4c25532a9b5cd8aaf9cec4919d76255b6bfb00f",
+#         "sortcode": "373891",
+#         "expiry_date": "0923"
 #     }
 #     ]
-# }
-
-
-# "payment_details": [
-# {
-#     "sender_cardholder_name": "Lewis Jackson",
-#     "sender_card_number": "9182737912873",
-#     "sender_cvc_hash": "1029730192874",
-#     "sender_sortcode": "38728732",
-#     "sender_expiry_date": "2023-11-11"
 # }
 @api_view(["POST"])
 def add_booking(request, format=None):
 	if request.method == "POST":
 
 		sender_cardholder_name = request.data["payment_details"][0]["cardholder_name"]
-		sender_card_number = request.data["payment_details"][0]["card_number"]
+		sender_card_hash = request.data["payment_details"][0]["card_number"]
 		sender_cvc_hash = request.data["payment_details"][0]["cvc"]
 		sender_sortcode = request.data["payment_details"][0]["sortcode"]
 		sender_expiry_date = request.data["payment_details"][0]["expiry_date"]
@@ -164,23 +169,24 @@ def add_booking(request, format=None):
 
 		card_details = {
 			"sender_cardholder_name":sender_cardholder_name,
-			"sender_card_number":sender_card_number,
+			"sender_card_hash":sender_card_hash,
 			"sender_cvc_hash":sender_cvc_hash,
 			"sender_sortcode":sender_sortcode,
 			"sender_expiry_date":sender_expiry_date,
-			"recipient_cardholder_name":"Mr Bean",
-			"recipient_sortcode":"373891",
-			"recipient_account_number":"23456789",
+			"recipient_cardholder_name":airline_cardholder_name,
+			"recipient_sortcode":sender_sortcode, #change this
+			"recipient_account_number":airline_account_number,
 			"payment_amount":"100.00"
 		}
 
-		response = requests.post("https://jzhangly.pythonanywhere.com/pay/", json=card_details)
-		#print(response.status_code)
-		print(response.text)
-
-		get_data = {"transaction_id":"15"}
-		response = requests.post("https://jzhangly.pythonanywhere.com/get_transaction_details/", json=get_data)
-		print(response.text)
+		response = requests.post("https://sc20jzl.pythonanywhere.com/pay/", json=card_details)
+		print(response.status_code)
+		response = json.loads(response.text)
+		print(response["transaction_id"])
+		if response.status == 200:
+			booking.transaction_id = response["transaction_id"]
+			booking.save()
+			booking.payment_confirmed = True
 		return Response(booking_serializer.data, status=status.HTTP_200_OK)
 	return Response(booking_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -200,9 +206,7 @@ def get_booking_details(request, format=None):
 		# request.data["flight_id"] = seat.flight_id
 		# request.data["num_passengers"] = len(Passenger.objects.filter(booking_id=booking.id))
 		booking_serializer = BookingSerializer(booking, request.data)
-		print("here")
 		if booking_serializer.is_valid():
-			print("here1")
 			serialized_data = booking_serializer.data
 			print(serialized_data)
 			serialized_data["num_passengers"] = len(Passenger.objects.filter(booking_id=booking.id))
@@ -214,7 +218,11 @@ def get_booking_details(request, format=None):
 @api_view(["DELETE"])
 def delete_booking(request, format=None):
 	if request.method == "DELETE":
+		booking_id = request.data["booking_id"]
 		booking = BookingInstance.objects.get(id = booking_id)
-		serializer = BookingSerializer(booking, request.data)
-		serialized_data = serializer.data
-		print(serialized_data[0])
+		booking.delete()
+		get_data = {"transaction_id":response["transaction_id"]}
+		response = requests.post("https://sc20jzl.pythonanywhere.com/get_transaction_details/", json=get_data)
+		print(response.text)
+
+	Response(request.data, status=status.HTTP_200_OK)
