@@ -113,15 +113,25 @@ def update_seats(request, format=None):
 #     }
 #     ]
 # }
+
+
+# "payment_details": [
+# {
+#     "sender_cardholder_name": "Lewis Jackson",
+#     "sender_card_number": "9182737912873",
+#     "sender_cvc_hash": "1029730192874",
+#     "sender_sortcode": "38728732",
+#     "sender_expiry_date": "2023-11-11"
+# }
 @api_view(["POST"])
 def add_booking(request, format=None):
 	if request.method == "POST":
 
-		# sender_cardholder_name = request.data["sender_cardholder_name"]
-		# sender_card_number = request.data["sender_card_number"]
-		# sender_cvc_hash = request.data["sender_cvc_hash"]
-		# sender_sortcode = request.data["sender_sortcode"]
-		# sender_expiry_date = request.data["sender_expiry_date"]
+		sender_cardholder_name = request.data["payment_details"][0]["cardholder_name"]
+		sender_card_number = request.data["payment_details"][0]["card_number"]
+		sender_cvc_hash = request.data["payment_details"][0]["cvc"]
+		sender_sortcode = request.data["payment_details"][0]["sortcode"]
+		sender_expiry_date = request.data["payment_details"][0]["expiry_date"]
 
 		request.data["booked_at_time"] = datetime.datetime.now()
 		flight_id = request.data["flight_id"]
@@ -151,10 +161,21 @@ def add_booking(request, format=None):
 				seat.save()
 				flight.num_available_seats = flight.num_available_seats - 1
 				flight.save()
-		card_details = {"sender_cardholder_name":"James","sender_card_number":"1234567890987654","sender_cvc_hash":"9a0a82f0c0cf31470d7affede3406cc9aa8410671520b727044eda15b4c25532a9b5cd8aaf9cec4919d76255b6bfb00f","sender_sortcode":"373891","sender_expiry_date":"0923","recipient_cardholder_name":"Mr Bean","recipient_sortcode":"373891","recipient_account_number":"23456789","payment_amount":"100.00"}
+
+		card_details = {
+			"sender_cardholder_name":sender_cardholder_name,
+			"sender_card_number":sender_card_number,
+			"sender_cvc_hash":sender_cvc_hash,
+			"sender_sortcode":sender_sortcode,
+			"sender_expiry_date":sender_expiry_date,
+			"recipient_cardholder_name":"Mr Bean",
+			"recipient_sortcode":"373891",
+			"recipient_account_number":"23456789",
+			"payment_amount":"100.00"
+		}
 
 		response = requests.post("https://jzhangly.pythonanywhere.com/pay/", json=card_details)
-		print(response.status_code)
+		#print(response.status_code)
 		print(response.text)
 
 		get_data = {"transaction_id":"15"}
@@ -174,10 +195,19 @@ def get_booking_details(request, format=None):
 		request.data["lead_passenger_contact_email"] = booking.lead_passenger_contact_email
 		request.data["lead_passenger_contact_number"] = booking.lead_passenger_contact_number
 		request.data["total_booking_cost"] = booking.total_booking_cost
-		booking_serializer = BookingSerializer(booking, data=request.data)
+		passenger = Passenger.objects.filter(booking_id=booking.id).first()
+		seat = SeatInstance.objects.get(id=passenger.seat_id.id)
+		# request.data["flight_id"] = seat.flight_id
+		# request.data["num_passengers"] = len(Passenger.objects.filter(booking_id=booking.id))
+		booking_serializer = BookingSerializer(booking, request.data)
+		print("here")
 		if booking_serializer.is_valid():
-			return Response(booking_serializer.data, status=status.HTTP_200_OK)
-		return Response(booking_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+			print("here1")
+			serialized_data = booking_serializer.data
+			print(serialized_data)
+			serialized_data["num_passengers"] = len(Passenger.objects.filter(booking_id=booking.id))
+			serialized_data["flight_id"] = seat.flight_id.id
+			return Response(serialized_data, status=status.HTTP_200_OK)
 	return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
