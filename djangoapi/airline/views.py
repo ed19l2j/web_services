@@ -185,8 +185,8 @@ def add_booking(request, format=None):
 		print(response.status_code)
 		if response.status_code == 200:
 			booking.transaction_id = jsonresponse["transaction_id"]
-			booking.save()
 			booking.payment_confirmed = True
+			booking.save()
 		return Response(booking_serializer.data, status=status.HTTP_200_OK)
 	return Response(booking_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
