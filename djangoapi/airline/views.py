@@ -119,25 +119,23 @@ def update_seats(request, format=None):
 #         "passport_number": "02910831083",
 #         "seat_name": "A9"
 #     }],
-#     "payment_details": [
+#     "payment_details":
 #     {
-#         "cardholder_name": "James",
-#         "card_number": "1234567890987654",
-#         "cvc": "9a0a82f0c0cf31470d7affede3406cc9aa8410671520b727044eda15b4c25532a9b5cd8aaf9cec4919d76255b6bfb00f",
+#         "cardholder_name": "Mr Bean",
+#         "card_number": "0b8c6e90f39582d09db07e483f8f1f44538003bbb95403d3e4037734c012e1cc069c1bbe9bfa746498d1fe712fd66766",
+#         "cvc": "f100da566d3b762ff476ea194b7519b1bc5fc67cb3adf6837b91716c69dccc2c8dc490c9c04be39cc6f2fbe6a14b8903",
 #         "sortcode": "373891",
-#         "expiry_date": "0923"
+#         "expiry_date": "2406"
 #     }
-#     ]
 # }
 @api_view(["POST"])
 def add_booking(request, format=None):
 	if request.method == "POST":
-
-		sender_cardholder_name = request.data["payment_details"][0]["cardholder_name"]
-		sender_card_hash = request.data["payment_details"][0]["card_number"]
-		sender_cvc_hash = request.data["payment_details"][0]["cvc"]
-		sender_sortcode = request.data["payment_details"][0]["sortcode"]
-		sender_expiry_date = request.data["payment_details"][0]["expiry_date"]
+		sender_cardholder_name = request.data["payment_details"]["cardholder_name"]
+		sender_card_hash = request.data["payment_details"]["card_number"]
+		sender_cvc_hash = request.data["payment_details"]["cvc"]
+		sender_sortcode = request.data["payment_details"]["sortcode"]
+		sender_expiry_date = request.data["payment_details"]["expiry_date"]
 
 		request.data["booked_at_time"] = datetime.datetime.now()
 		flight_id = request.data["flight_id"]
@@ -183,11 +181,13 @@ def add_booking(request, format=None):
 		response = requests.post("https://sc20jzl.pythonanywhere.com/pay/", json=card_details)
 		jsonresponse = json.loads(response.text)
 		print(response.status_code)
+		print(response.text)
 		if response.status_code == 200:
 			booking.transaction_id = jsonresponse["transaction_id"]
 			booking.payment_confirmed = True
 			booking.save()
 		return Response(booking_serializer.data, status=status.HTTP_200_OK)
+
 	return Response(booking_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -230,27 +230,32 @@ def delete_booking(request, format=None):
 		passengers = Passenger.objects.filter(booking_id=booking_id)
 		######
 		for passenger in passengers:
-			seat = SeatInstance.objects.get(id=passenger.seat_id)
+			seat = SeatInstance.objects.get(id=passenger.seat_id.id)
 			seat.available=True
 			seat.save()
 		######
+		transaction_id = request.data["transaction_id"]
+		get_data = {"transaction_id":transaction_id}
+		response = requests.post("https://sc20jzl.pythonanywhere.com/get_transaction_details/", json=get_data)
+		print(response.text)
+		jsonresponse = json.loads(response.text)
+		recipient_account_number = jsonresponse["sender_account_number"]
+		recipient_sortcode = jsonresponse["sender_sortcode"]
+		#recipient_cardholder_name = "John Smith" # ???????????
+		payment_amount = jsonresponse["payment_amount"]
 		card_details = {
 			"sender_cardholder_name":airline_cardholder_name,
 			"sender_card_hash":airline_card_number_hash,
 			"sender_cvc_hash":airline_cvc_hash,
 			"sender_sortcode":airline_sortcode,
 			"sender_expiry_date":airline_expiry_date,
-			"recipient_cardholder_name":sender_cardholder_name,
-			"recipient_sortcode":sender_sortcode,
-			"recipient_account_number":sender_account_number,
+			#"recipient_cardholder_name":recipient_cardholder_name, #??????????? how do i get this
+			"recipient_sortcode":recipient_sortcode,
+			"recipient_account_number":recipient_account_number,
 			"payment_amount":"100.00"
 		}
-
-		response = requests.post("https://sc20jzl.pythonanywhere.com/pay/", json=card_details)
+		#response = requests.post("https://sc20jzl.pythonanywhere.com/pay/", json=card_details)
 		######
-		get_data = {"transaction_id":response["transaction_id"]}
-		response = requests.post("https://sc20jzl.pythonanywhere.com/get_transaction_details/", json=get_data)
-		print(response.text)
-		booking.delete()
+		#booking.delete()
 
-	Response(request.data, status=status.HTTP_200_OK)
+	return Response(status=status.HTTP_200_OK)
