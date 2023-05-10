@@ -14,6 +14,7 @@ import json
 airline_account_number = "20202020"
 airline_card_number_hash = "0a08c389d1e7ec3e1d13a74f46e1aae2b020d607316e4b818f378dc62d2c4d90477371fd034799c374ff8699b63a6f69"
 airline_cvc_hash = "99e0a589f8889faee97a49bc43e3ec1faf735413c39fffd20d2f261fb019bbf8d3b3e07f203088aa50ee279fc24d7ce3"
+airline_sortcode = "373891"
 airline_expiry_date = "0724"
 airline_cardholder_name = "Lewis Jackson"
 
@@ -174,15 +175,16 @@ def add_booking(request, format=None):
 			"sender_sortcode":sender_sortcode,
 			"sender_expiry_date":sender_expiry_date,
 			"recipient_cardholder_name":airline_cardholder_name,
-			"recipient_sortcode":sender_sortcode, #change this
+			"recipient_sortcode":airline_sortcode,
 			"recipient_account_number":airline_account_number,
 			"payment_amount":"100.00"
 		}
 
 		response = requests.post("https://sc20jzl.pythonanywhere.com/pay/", json=card_details)
-		response = json.loads(response.text)
+		jsonresponse = json.loads(response.text)
+		print(response.status_code)
 		if response.status_code == 200:
-			booking.transaction_id = response["transaction_id"]
+			booking.transaction_id = jsonresponse["transaction_id"]
 			booking.save()
 			booking.payment_confirmed = True
 		return Response(booking_serializer.data, status=status.HTTP_200_OK)
@@ -216,11 +218,39 @@ def get_booking_details(request, format=None):
 @api_view(["DELETE"])
 def delete_booking(request, format=None):
 	if request.method == "DELETE":
+		#find booking
+		#find passengers
+		#make the seats available again
+		#refund the booking account using transaction_id
+		#delete the booking
+		#make sure its also deleted the passengers
 		booking_id = request.data["booking_id"]
 		booking = BookingInstance.objects.get(id = booking_id)
-		booking.delete()
+		######
+		passengers = Passenger.objects.filter(booking_id=booking_id)
+		######
+		for passenger in passengers:
+			seat = SeatInstance.objects.get(id=passenger.seat_id)
+			seat.available=True
+			seat.save()
+		######
+		card_details = {
+			"sender_cardholder_name":airline_cardholder_name,
+			"sender_card_hash":airline_card_number_hash,
+			"sender_cvc_hash":airline_cvc_hash,
+			"sender_sortcode":airline_sortcode,
+			"sender_expiry_date":airline_expiry_date,
+			"recipient_cardholder_name":sender_cardholder_name,
+			"recipient_sortcode":sender_sortcode,
+			"recipient_account_number":sender_account_number,
+			"payment_amount":"100.00"
+		}
+
+		response = requests.post("https://sc20jzl.pythonanywhere.com/pay/", json=card_details)
+		######
 		get_data = {"transaction_id":response["transaction_id"]}
 		response = requests.post("https://sc20jzl.pythonanywhere.com/get_transaction_details/", json=get_data)
 		print(response.text)
+		booking.delete()
 
 	Response(request.data, status=status.HTTP_200_OK)
