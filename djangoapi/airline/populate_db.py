@@ -68,7 +68,7 @@ def PopulateFlights():
 			flight.departure_country = Country.objects.get(id=dep)# randomint between 1-196
 			flight.arrival_country = Country.objects.get(id=arr)# randomint between 1-196
 			# make sure they arent the same
-			flight.flight_ticket_cost = 200# random int between 50-500
+			flight.flight_ticket_cost = randint(50,500)
 			coords_1 = (flight.departure_country.latitude, flight.departure_country.longitude)
 			coords_2 = (flight.arrival_country.latitude, flight.arrival_country.longitude)
 			distance_between_countries = geopy.distance.geodesic(coords_1, coords_2).miles
