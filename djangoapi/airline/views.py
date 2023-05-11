@@ -14,8 +14,8 @@ import json
 airline_account_number = "20202020"
 airline_card_number_hash = "0a08c389d1e7ec3e1d13a74f46e1aae2b020d607316e4b818f378dc62d2c4d90477371fd034799c374ff8699b63a6f69"
 airline_cvc_hash = "99e0a589f8889faee97a49bc43e3ec1faf735413c39fffd20d2f261fb019bbf8d3b3e07f203088aa50ee279fc24d7ce3"
-# airline_sortcode = "373891"
-airline_sortcode = "232323"
+airline_sortcode = "373891"
+#airline_sortcode_lanre = "232323"
 airline_expiry_date = "07/24"
 airline_cardholder_name = "Lewis Jackson"
 
@@ -69,7 +69,6 @@ def query_flights(request):
 		serialized_data = serializer.data
 		serialized_data[0]['departure_country'] = departure_country
 		serialized_data[0]['arrival_country'] = arrival_country
-		# serialized_data.departure_country = departure_country
 		return Response(serialized_data, status=status.HTTP_200_OK)
 	return Response(status=status.HTTP_200_OK)
 
@@ -176,11 +175,11 @@ def add_booking(request, format=None):
 			"recipient_cardholder_name":airline_cardholder_name,
 			"recipient_sortcode":airline_sortcode,
 			"recipient_account_number":airline_account_number,
-			"payment_amount":"100.00"
+			"payment_amount":"100.00" ## change this
 		}
 
-		# response = requests.post("https://sc20jzl.pythonanywhere.com/pay/", json=card_details)
-		response = requests.post("https://lanre.pythonanywhere.com/pay/", json=card_details)
+		response = requests.post("https://sc20jzl.pythonanywhere.com/pay/", json=card_details)
+		# response = requests.post("https://lanre.pythonanywhere.com/pay/", json=card_details)
 		jsonresponse = json.loads(response.text)
 		print(response.status_code)
 		print(response.text)
@@ -236,30 +235,31 @@ def delete_booking(request, format=None):
 			seat.available=True
 			seat.save()
 		######
-		transaction_id = request.data["transaction_id"]
+		transaction_id = booking.transaction_id
 		get_data = {"transaction_id":transaction_id}
 		response = requests.post("https://sc20jzl.pythonanywhere.com/get_transaction_details/", json=get_data)
 		print(response.text)
 		jsonresponse = json.loads(response.text)
-		recipient_account_number = jsonresponse["sender_account_number"]
+		recipient_account_number = request.data["account_number"]
 		recipient_sortcode = jsonresponse["sender_sortcode"]
-		#recipient_cardholder_name = "John Smith" # ???????????
+		recipient_cardholder_name = jsonresponse["sender_name"]
 		payment_amount = jsonresponse["payment_amount"]
 		card_details = {
 			"sender_cardholder_name":airline_cardholder_name,
-			"sender_card_hash":airline_card_number_hash,
+			"sender_card_number_hash":airline_card_number_hash,
 			"sender_cvc_hash":airline_cvc_hash,
 			"sender_sortcode":airline_sortcode,
 			"sender_expiry_date":airline_expiry_date,
-			#"recipient_cardholder_name":recipient_cardholder_name, #??????????? how do i get this
+			"recipient_cardholder_name":recipient_cardholder_name,
 			"recipient_sortcode":recipient_sortcode,
 			"recipient_account_number":recipient_account_number,
-			"payment_amount":"100.00"
+			"payment_amount":payment_amount
 		}
-		#response = requests.post("https://sc20jzl.pythonanywhere.com/pay/", json=card_details)
+		response = requests.post("https://sc20jzl.pythonanywhere.com/pay/", json=card_details)
+		print(response.text)
 		######
-		#booking.delete()
-		# for passenger in passengers:
-		# 	passenger.delete()
+		booking.delete()
+		for passenger in passengers:
+			passenger.delete()
 
 	return Response(status=status.HTTP_200_OK)
