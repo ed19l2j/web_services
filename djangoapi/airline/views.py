@@ -14,8 +14,9 @@ import json
 airline_account_number = "20202020"
 airline_card_number_hash = "0a08c389d1e7ec3e1d13a74f46e1aae2b020d607316e4b818f378dc62d2c4d90477371fd034799c374ff8699b63a6f69"
 airline_cvc_hash = "99e0a589f8889faee97a49bc43e3ec1faf735413c39fffd20d2f261fb019bbf8d3b3e07f203088aa50ee279fc24d7ce3"
-airline_sortcode = "373891"
-airline_expiry_date = "0724"
+# airline_sortcode = "373891"
+airline_sortcode = "232323"
+airline_expiry_date = "07/24"
 airline_cardholder_name = "Lewis Jackson"
 
 
@@ -136,8 +137,8 @@ def add_booking(request, format=None):
 		sender_cvc_hash = request.data["payment_details"]["cvc"]
 		sender_sortcode = request.data["payment_details"]["sortcode"]
 		sender_expiry_date = request.data["payment_details"]["expiry_date"]
-
-		request.data["booked_at_time"] = datetime.datetime.now()
+		current_time = datetime.datetime.now()
+		request.data["booked_at_time"] = current_time.strftime("%Y-%m-%d %H:%M:%S")
 		flight_id = request.data["flight_id"]
 		flight = FlightInstance.objects.get(pk=flight_id)
 		request.data["total_booking_cost"] = flight.flight_ticket_cost
@@ -168,7 +169,7 @@ def add_booking(request, format=None):
 
 		card_details = {
 			"sender_cardholder_name":sender_cardholder_name,
-			"sender_card_hash":sender_card_hash,
+			"sender_card_number_hash":sender_card_hash,
 			"sender_cvc_hash":sender_cvc_hash,
 			"sender_sortcode":sender_sortcode,
 			"sender_expiry_date":sender_expiry_date,
@@ -178,7 +179,8 @@ def add_booking(request, format=None):
 			"payment_amount":"100.00"
 		}
 
-		response = requests.post("https://sc20jzl.pythonanywhere.com/pay/", json=card_details)
+		# response = requests.post("https://sc20jzl.pythonanywhere.com/pay/", json=card_details)
+		response = requests.post("https://lanre.pythonanywhere.com/pay/", json=card_details)
 		jsonresponse = json.loads(response.text)
 		print(response.status_code)
 		print(response.text)
@@ -257,5 +259,7 @@ def delete_booking(request, format=None):
 		#response = requests.post("https://sc20jzl.pythonanywhere.com/pay/", json=card_details)
 		######
 		#booking.delete()
+		# for passenger in passengers:
+		# 	passenger.delete()
 
 	return Response(status=status.HTTP_200_OK)
