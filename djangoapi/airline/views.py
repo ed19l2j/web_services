@@ -222,7 +222,8 @@ def get_booking_details(request, format=None):
 # {
 #     "booking_id":82,
 #     "account_number":23456789,
-#     "lead_passenger_contact_email":"testingtesting@hello.com"
+#     "lead_passenger_contact_email":"testingtesting@hello.com",
+#     "sortcode": 373891
 # }
 @api_view(["DELETE"])
 def delete_booking(request, format=None):
@@ -250,7 +251,7 @@ def delete_booking(request, format=None):
 			elif sortcode == "232323":
 				response = requests.post("https://lanre.pythonanywhere.com/get_transaction_details/", json=get_data)
 			else:
-				return Response(status=status_code.HTTP_400_BAD_REQUEST)
+				return Response(status=status.HTTP_400_BAD_REQUEST)
 			print(response.text)
 			jsonresponse = json.loads(response.text)
 			recipient_account_number = request.data["account_number"]
