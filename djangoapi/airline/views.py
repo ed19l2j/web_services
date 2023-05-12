@@ -35,7 +35,7 @@ except:
 
 
 try:
-	with open('/home/iewiis/web_services/djangoapi/countries.csv', mode='r') as csvfile:
+	with open('/home/ed19l2j/web_services/djangoapi/countries.csv', mode='r') as csvfile:
 		reader = csv.reader(csvfile, delimiter=',')
 		i = 0
 		for line in reader:
