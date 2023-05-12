@@ -15,7 +15,7 @@ airline_account_number = "20202020"
 airline_card_number_hash = "0a08c389d1e7ec3e1d13a74f46e1aae2b020d607316e4b818f378dc62d2c4d90477371fd034799c374ff8699b63a6f69"
 airline_cvc_hash = "99e0a589f8889faee97a49bc43e3ec1faf735413c39fffd20d2f261fb019bbf8d3b3e07f203088aa50ee279fc24d7ce3"
 airline_sortcode = "373891"
-#airline_sortcode_lanre = "232323"
+lanre_sortcode = "232323"
 airline_expiry_date = "07/24"
 airline_cardholder_name = "Lewis Jackson"
 
@@ -46,6 +46,14 @@ try:
 except:
 	pass
 
+
+# {
+#     "departure_country": "Belarus",
+#     "arrival_country": "Bolivia",
+#     "departure_date": "2023-11-25",
+#     "max_price": 800,
+#     "num_passengers": 1
+# }
 @api_view(["GET"])
 def query_flights(request):
 	if request.method == "GET":
@@ -58,13 +66,12 @@ def query_flights(request):
 			try:
 				flights = FlightInstance.objects.filter(departure_country=locToId[departure_country], arrival_country=locToId[arrival_country], departure_day=departure_date, flight_ticket_cost__lte=max_price, num_available_seats__gte=num_passengers)
 			except FlightInstance.DoesNotExist:
-				return Response(status=status.HTTP_404_NOT_FOUND)
+				return Response(flights, status=status.HTTP_404_NOT_FOUND)
 		else:
 			try:
 				flights = FlightInstance.objects.filter(departure_country=locToId[departure_country], arrival_country=locToId[arrival_country], departure_day=departure_date, num_available_seats__gte=num_passengers)
 			except FlightInstance.DoesNotExist:
-				return Response(status=status.HTTP_404_NOT_FOUND)
-
+				return Response(flights, status=status.HTTP_404_NOT_FOUND)
 		serializer = FlightSerializer(flights, many=True)
 		serialized_data = serializer.data
 		serialized_data[0]['departure_country'] = departure_country
@@ -131,11 +138,6 @@ def update_seats(request, format=None):
 @api_view(["POST"])
 def add_booking(request, format=None):
 	if request.method == "POST":
-		sender_cardholder_name = request.data["payment_details"]["cardholder_name"]
-		sender_card_hash = request.data["payment_details"]["card_number"]
-		sender_cvc_hash = request.data["payment_details"]["cvc"]
-		sender_sortcode = request.data["payment_details"]["sortcode"]
-		sender_expiry_date = request.data["payment_details"]["expiry_date"]
 		current_time = datetime.datetime.now()
 		request.data["booked_at_time"] = current_time.strftime("%Y-%m-%d %H:%M:%S")
 		flight_id = request.data["flight_id"]
@@ -165,7 +167,11 @@ def add_booking(request, format=None):
 				seat.save()
 				flight.num_available_seats = flight.num_available_seats - 1
 				flight.save()
-
+		sender_cardholder_name = request.data["payment_details"]["cardholder_name"]
+		sender_card_hash = request.data["payment_details"]["card_number"]
+		sender_cvc_hash = request.data["payment_details"]["cvc"]
+		sender_sortcode = request.data["payment_details"]["sortcode"]
+		sender_expiry_date = request.data["payment_details"]["expiry_date"]
 		card_details = {
 			"sender_cardholder_name":sender_cardholder_name,
 			"sender_card_number_hash":sender_card_hash,
@@ -177,12 +183,13 @@ def add_booking(request, format=None):
 			"recipient_account_number":airline_account_number,
 			"payment_amount":str(flight.flight_ticket_cost * len(passengers))
 		}
-
-		response = requests.post("https://sc20jzl.pythonanywhere.com/pay/", json=card_details)
-		# response = requests.post("https://lanre.pythonanywhere.com/pay/", json=card_details)
+		if sender_sortcode == "373891":
+			response = requests.post("https://sc20jzl.pythonanywhere.com/pay/", json=card_details)
+		elif sender_sortcode == "232323":
+			response = requests.post("https://lanre.pythonanywhere.com/pay/", json=card_details)
+		else:
+			return Response(status=status.HTTP_400_BAD_REQUEST)
 		jsonresponse = json.loads(response.text)
-		print(response.status_code)
-		print(response.text)
 		if response.status_code == 200:
 			booking.transaction_id = jsonresponse["transaction_id"]
 			booking.payment_confirmed = True
@@ -232,6 +239,9 @@ def delete_booking(request, format=None):
 				seat = SeatInstance.objects.get(id=passenger.seat_id.id)
 				seat.available=True
 				seat.save()
+				flight = FlightInstance.objects.get(id=seat.flight_id.id)
+				flight.num_available_seats = flight.num_available_seats + 1
+				flight.save()
 			######
 			transaction_id = booking.transaction_id
 			get_data = {"transaction_id":transaction_id}
@@ -254,7 +264,6 @@ def delete_booking(request, format=None):
 				"payment_amount":payment_amount
 			}
 			response = requests.post("https://sc20jzl.pythonanywhere.com/pay/", json=card_details)
-			print(response.text)
 			######
 			booking.delete()
 			for passenger in passengers:

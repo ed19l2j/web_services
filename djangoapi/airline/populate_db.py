@@ -38,18 +38,9 @@ def PopulatePlanes():
 		i += 1
 
 def str_time_prop(start, end, time_format, prop):
-	"""Get a time at a proportion of a range of two formatted times.
-
-	start and end should be strings specifying times formatted in the
-	given format (strftime-style), giving an interval [start, end].
-	prop specifies how a proportion of the interval to be taken after
-	start.  The returned time will be in the specified format.
-	"""
-
 	stime = time.mktime(time.strptime(start, time_format))
 	etime = time.mktime(time.strptime(end, time_format))
 	ptime = stime + prop * (etime - stime)
-
 	length_of_flight = random.randint(60,720)
 	later_time = ptime + 60*length_of_flight
 	return time.strftime(time_format, time.localtime(ptime)), time.strftime(time_format, time.localtime(later_time)), later_time
@@ -60,7 +51,7 @@ def random_date(start, end, prop):
 
 
 def PopulateFlights():
-	for flight in range(10):
+	for flight in range(1000):
 		flight = FlightInstance()
 		dep=random.randint(1,196)
 		arr=random.randint(1,196)
@@ -68,7 +59,7 @@ def PopulateFlights():
 			flight.departure_country = Country.objects.get(id=dep)# randomint between 1-196
 			flight.arrival_country = Country.objects.get(id=arr)# randomint between 1-196
 			# make sure they arent the same
-			flight.flight_ticket_cost = randint(50,500)
+			flight.flight_ticket_cost = random.randint(50,500)
 			coords_1 = (flight.departure_country.latitude, flight.departure_country.longitude)
 			coords_2 = (flight.arrival_country.latitude, flight.arrival_country.longitude)
 			distance_between_countries = geopy.distance.geodesic(coords_1, coords_2).miles
@@ -85,7 +76,7 @@ def PopulateFlights():
 			else:
 				flight.plane_id = Plane.objects.get(id=6)
 			flight.num_available_seats = flight.plane_id.max_capacity
-			flight.departure_time, flight.arrival_time, later_time = random_date("2023-07-05 01:01:01", "2023-12-31 01:01:01", random.random())
+			flight.departure_time, flight.arrival_time, later_time = random_date("2023-06-01 01:01:01", "2023-06-14 01:01:01", random.random())
 			utc_struct_time = time.gmtime(later_time)
 			dt = datetime.datetime.fromtimestamp(time.mktime(utc_struct_time))
 			flight.departure_day = dt
