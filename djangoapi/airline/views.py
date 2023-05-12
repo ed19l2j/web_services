@@ -19,7 +19,6 @@ lanre_sortcode = "232323"
 airline_expiry_date = "07/24"
 airline_cardholder_name = "Lewis Jackson"
 
-
 locToId = {}
 try:
 	with open('countries.csv', mode='r') as csvfile:
