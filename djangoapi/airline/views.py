@@ -243,8 +243,14 @@ def delete_booking(request, format=None):
 				flight.save()
 			######
 			transaction_id = booking.transaction_id
+			sortcode = request.data["sortcode"]
 			get_data = {"transaction_id":transaction_id}
-			response = requests.post("https://sc20jzl.pythonanywhere.com/get_transaction_details/", json=get_data)
+			if sortcode == "373891":
+				response = requests.post("https://sc20jzl.pythonanywhere.com/get_transaction_details/", json=get_data)
+			elif sortcode == "232323":
+				response = requests.post("https://lanre.pythonanywhere.com/get_transaction_details/", json=get_data)
+			else:
+				return Response(status=status_code.HTTP_400_BAD_REQUEST)
 			print(response.text)
 			jsonresponse = json.loads(response.text)
 			recipient_account_number = request.data["account_number"]
