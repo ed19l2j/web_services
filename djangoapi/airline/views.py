@@ -70,7 +70,7 @@ def query_flights(request):
 		serialized_data[0]['departure_country'] = departure_country
 		serialized_data[0]['arrival_country'] = arrival_country
 		return Response(serialized_data, status=status.HTTP_200_OK)
-	return Response(status=status.HTTP_200_OK)
+	return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["GET"])
@@ -83,6 +83,7 @@ def query_seats(request, format=None):
 			return Response(status=status.HTTP_404_NOT_FOUND)
 		serializer = SeatSerializer(seats, many=True)
 		return Response(serializer.data, status=status.HTTP_200_OK)
+	return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["PUT"])
@@ -97,7 +98,6 @@ def update_seats(request, format=None):
 		seat.available = True
 		seat.save()
 		new_seat = SeatInstance.objects.get(flight_id=seat.flight_id, seat_name=new_seat_name)
-		print(new_seat)
 		passenger.seat_id = new_seat
 		passenger.save()
 		new_seat.available = False
@@ -105,7 +105,7 @@ def update_seats(request, format=None):
 		return Response(status=status.HTTP_200_OK)
 	return Response(status=status.HTTP_400_BAD_REQUEST)
 
-
+#
 # {
 #     "flight_id": 1,
 #     "lead_passenger_contact_email": "testingtesting@hello.com",
@@ -187,8 +187,7 @@ def add_booking(request, format=None):
 			booking.transaction_id = jsonresponse["transaction_id"]
 			booking.payment_confirmed = True
 			booking.save()
-		return Response(booking_serializer.data, status=status.HTTP_200_OK)
-
+			return Response(booking_serializer.data, status=status.HTTP_200_OK)
 	return Response(booking_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -204,8 +203,6 @@ def get_booking_details(request, format=None):
 		request.data["total_booking_cost"] = booking.total_booking_cost
 		passenger = Passenger.objects.filter(booking_id=booking.id).first()
 		seat = SeatInstance.objects.get(id=passenger.seat_id.id)
-		# request.data["flight_id"] = seat.flight_id
-		# request.data["num_passengers"] = len(Passenger.objects.filter(booking_id=booking.id))
 		booking_serializer = BookingSerializer(booking, request.data)
 		if booking_serializer.is_valid():
 			serialized_data = booking_serializer.data
@@ -216,15 +213,14 @@ def get_booking_details(request, format=None):
 	return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
+# {
+#     "booking_id":82,
+#     "account_number":23456789,
+#     "lead_passenger_contact_email":"testingtesting@hello.com"
+# }
 @api_view(["DELETE"])
 def delete_booking(request, format=None):
 	if request.method == "DELETE":
-		#find booking
-		#find passengers
-		#make the seats available again
-		#refund the booking account using transaction_id
-		#delete the booking
-		#make sure its also deleted the passengers
 		booking_id = request.data["booking_id"]
 		booking = BookingInstance.objects.get(id = booking_id)
 		lead_passenger_contact_email = request.data["lead_passenger_contact_email"]
